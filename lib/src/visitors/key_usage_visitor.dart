@@ -11,6 +11,7 @@ import 'package:easy_localization_cleaner/easy_localization_cleaner.dart';
 /// - `plural('key', 1)`
 /// - `LocaleKeys.key.tr()`
 /// - `Text('key').tr()`
+/// - `LocaleKeys.key`
 class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
   /// A set to store the extracted localization keys.
   final Set<String> usedKeys = <String>{};
@@ -35,6 +36,7 @@ class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
   /// - `'key'.tr()`
   /// - `Text('key').tr()`
   /// - `LocaleKeys.key.tr()`
+  /// - `LocaleKeys.key`
   void _extractKeyFromTarget(Expression? target) {
     if (target is SimpleStringLiteral) {
       // Extract key from the target of a method invocation (e.g., 'key'.tr()).
@@ -70,5 +72,18 @@ class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
         usedKeys.add(argument.identifier.name);
       }
     }
+  }
+
+  /// Visits prefixed identifiers to extract localization keys.
+  ///
+  /// Handles cases like:
+  /// - `LocaleKeys.key`
+  @override
+  void visitPrefixedIdentifier(PrefixedIdentifier node) {
+    if (node.prefix.name == EasyLocalizationCleaner.generatedClassKey) {
+      // Handle cases like LocaleKeys.key used directly.
+      usedKeys.add(node.identifier.name);
+    }
+    super.visitPrefixedIdentifier(node);
   }
 }

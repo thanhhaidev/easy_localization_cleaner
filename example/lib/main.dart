@@ -18,6 +18,9 @@ class TextWidgets extends StatefulWidget {
 }
 
 class _TextWidgetsState extends State<TextWidgets> {
+  final languagesEn = LocaleKeys.languages_en;
+  final languagesFr = LocaleKeys.languages_fr;
+
   @override
   void initState() {
     super.initState();

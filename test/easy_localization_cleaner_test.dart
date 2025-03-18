@@ -19,7 +19,7 @@ void main() {
         .map((file) => File(file.path).readAsLinesSync().length)
         .reduce((value, element) => value + element);
 
-    expect(totalLines, 47);
+    expect(totalLines, 51);
   });
 
   test('All keys are used', () async {
@@ -37,6 +37,6 @@ void main() {
 
     EasyLocalizationCleaner.run([]);
 
-    expect(totalLines, 47);
+    expect(totalLines, 51);
   });
 }

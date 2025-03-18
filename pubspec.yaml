@@ -1,8 +1,7 @@
 name: easy_localization_cleaner
 description: >-
-  A Dart CLI tool designed to clean up unused localization keys from JSON files used with the `easy_localization` package.
-  It helps developers maintain clean and organized localization files by identifying and removing unused keys.
-version: 0.0.1
+  A Dart CLI tool designed to clean up unused localization keys from JSON/Arb files used with the `easy_localization` package.
+version: 0.0.2
 homepage: https://github.com/thanhhaidev/easy_localization_cleaner
 
 

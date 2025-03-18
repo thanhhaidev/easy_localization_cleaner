@@ -90,6 +90,7 @@ class EasyLocalizationCleaner {
     ArgParser()
       ..addOption(
         'current-path',
+        abbr: 'c', // Short command for --current-path
         help: 'The current path of the project. '
             'Defaults to the current directory.',
         defaultsTo: Directory.current.path,
@@ -99,6 +100,7 @@ class EasyLocalizationCleaner {
       )
       ..addOption(
         'generated-class-key',
+        abbr: 'g',
         help: 'The name of the generated class key. '
             'Defaults to `LocaleKeys`.',
         callback: (value) {
@@ -107,6 +109,7 @@ class EasyLocalizationCleaner {
       )
       ..addOption(
         'assets-dir',
+        abbr: 'a',
         help: 'The directory where the JSON files are located. '
             'Defaults to `assets/translations`.',
         defaultsTo: 'assets/translations',
@@ -116,6 +119,7 @@ class EasyLocalizationCleaner {
       )
       ..addOption(
         'export-log-file',
+        abbr: 'e',
         help: 'The path to export the log file. '
             'Defaults to `easy_localization_cleaner.log`.',
         defaultsTo: 'easy_localization_cleaner.log',

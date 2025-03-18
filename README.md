@@ -43,13 +43,13 @@ $ easy_localization_cleaner --current-path=/path/to/project --assets-dir=assets/
 
 ### Options
 
-| Option                  | Description                                     | Default Value                   |
-| ----------------------- | ----------------------------------------------- | ------------------------------- |
-| `--current-path`        | The current path of the project.                | Current directory (`.`)         |
-| `--generated-class-key` | The name of the generated class key.            | `LocaleKeys`                    |
-| `--assets-dir`          | The directory where the JSON files are located. | `assets/translations`           |
-| `--export-log-file`     | The path to export the log file.                | `easy_localization_cleaner.log` |
-| `--help`, `-h`          | Display the help message.                       |
+| Option                        | Description                                     | Default Value                   |
+| ----------------------------- | ----------------------------------------------- | ------------------------------- |
+| `--current-path` , `-c`       | The current path of the project.                | Current directory (`.`)         |
+| `--generated-class-key`, `-g` | The name of the generated class key.            | `LocaleKeys`                    |
+| `--assets-dir`, `-a`          | The directory where the JSON files are located. | `assets/translations`           |
+| `--export-log-file`, `-e`     | The path to export the log file.                | `easy_localization_cleaner.log` |
+| `--help`, `-h`                | Display the help message.                       |
 
 ## Contributing 🤝
 
