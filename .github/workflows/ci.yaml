@@ -1,0 +1,38 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+
+jobs:
+  run-tests:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+
+      - name: Install dart dependencies
+        run: flutter pub get
+
+      - name: Run scripts
+        run: |
+          chmod +x ./run_scripts.sh
+          ./run_scripts.sh
+
+      - name: Analyze package
+        run: dart analyze lib test
+
+      - name: Verify package formatting
+        run: dart format --set-exit-if-changed lib test
+
+      - name: Run tests
+        run: dart test --reporter=github --coverage=./coverage/reports
