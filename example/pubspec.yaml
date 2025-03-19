@@ -10,3 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
 
+dev_dependencies:
+  easy_localization_cleaner:
+    path: ../

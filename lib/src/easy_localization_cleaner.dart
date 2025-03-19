@@ -55,9 +55,8 @@ class EasyLocalizationCleaner {
 
     final unusedKeys = localeKeys.difference(usedKeys);
 
-    final totalKeys = localeKeys.length - baseKeys.length;
-    final usedKeysCount =
-        localeKeys.length - unusedKeys.length - baseKeys.length;
+    final totalKeys = localeKeys.length;
+    final usedKeysCount = localeKeys.length - unusedKeys.length;
     final baseKeysCount = baseKeys.length;
 
     writeInfo(
@@ -66,7 +65,7 @@ class EasyLocalizationCleaner {
       'base keys: $baseKeysCount',
     );
 
-    if (unusedKeys.length == baseKeys.length) {
+    if (totalKeys == usedKeysCount) {
       writeSuccess('All LocaleKeys are used.');
       return;
     } else {
@@ -137,11 +136,12 @@ class EasyLocalizationCleaner {
             r'Use "\t" for tabs or a number (e.g., 4) for spaces.',
         defaultsTo: '  ',
         callback: (value) {
-          if (value == r'\t') {
+          print(value);
+          if (value == r'\t' || value == 't') {
             jsonIndent = '\t';
           } else {
             final spaces = int.tryParse(value ?? '2');
-            jsonIndent = spaces != null ? ' ' * spaces : '  '; // Use spaces
+            jsonIndent = spaces != null ? ' ' * spaces : '  ';
           }
         },
       )

@@ -1,3 +1,9 @@
+# 0.0.4
+
+- Fixed an issue where the `--json-indent=\t` command was not correctly interpreted as a tab character.
+  - Now supports both `--json-indent=\t` and `--json-indent=t` for specifying tab indentation.
+- Improved the `--json-indent` option to handle edge cases and ensure proper fallback to default values.
+
 # 0.0.3
 
 - Added support for the `--json-indent` (`-j`) command to specify JSON indentation format.
