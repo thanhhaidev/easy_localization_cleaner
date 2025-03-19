@@ -50,7 +50,7 @@ $ easy_localization_cleaner --current-path=/path/to/project --assets-dir=assets/
 | `--generated-class-key`, `-g` | The name of the generated class key.                                                       | `LocaleKeys`            |
 | `--assets-dir`, `-a`          | The directory where the JSON files are located.                                            | `assets/translations`   |
 | `--[no-]export`, `-e`         | Save unused keys as a .log file in the path provided.                                      | false                   |
-| `--json-indent`, `-j`         | Specify the JSON indentation format. Use `\t` for tabs or a number (e.g., `4`) for spaces. | `  ` (2 spaces)         |
+| `--json-indent`, `-j`         | Specify the JSON indentation format. Use `\t` for tabs or a number (e.g., `4`) for spaces. | (2 spaces)              |
 | `--help`, `-h`                | Display the help message.                                                                  |
 
 ### Examples

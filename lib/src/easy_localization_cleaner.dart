@@ -136,7 +136,6 @@ class EasyLocalizationCleaner {
             r'Use "\t" for tabs or a number (e.g., 4) for spaces.',
         defaultsTo: '  ',
         callback: (value) {
-          print(value);
           if (value == r'\t' || value == 't') {
             jsonIndent = '\t';
           } else {

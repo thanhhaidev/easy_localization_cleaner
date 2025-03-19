@@ -1,3 +1,7 @@
+# 0.0.5
+
+- Remove log and update README
+
 # 0.0.4
 
 - Fixed an issue where the `--json-indent=\t` command was not correctly interpreted as a tab character.
