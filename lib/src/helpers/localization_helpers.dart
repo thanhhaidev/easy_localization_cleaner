@@ -91,6 +91,7 @@ final class LocalizationHelpers {
     Set<String> unusedKeys,
     Set<String> baseKeys,
     String assetsDir,
+    String jsonIndent,
   ) {
     final jsonFiles = Glob('$currentPath/$assetsDir/**.json').listSync();
 
@@ -107,7 +108,7 @@ final class LocalizationHelpers {
         }
 
         final updatedJsonString =
-            const JsonEncoder.withIndent('  ').convert(jsonMap);
+            JsonEncoder.withIndent(jsonIndent).convert(jsonMap);
         File(file.path).writeAsStringSync(updatedJsonString);
 
         writeSuccess('Updated ${file.path}');
@@ -150,6 +151,6 @@ final class LocalizationHelpers {
     final content = keys.join('\n');
     file.writeAsStringSync(content);
 
-    writeSuccess('Exported log file to $logFile');
+    writeSuccess('Exported log file to ${file.path}');
   }
 }

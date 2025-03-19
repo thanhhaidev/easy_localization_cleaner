@@ -26,6 +26,10 @@ class EasyLocalizationCleaner {
   /// Defaults to `easy_localization_cleaner.log`.
   static String logFilePath = 'easy_localization_cleaner.log';
 
+  /// The JSON indentation format.
+  /// Defaults to 2 spaces.
+  static String jsonIndent = '  ';
+
   /// The main entry point for the CLI tool.
   ///
   /// [args] are the command-line arguments passed to the tool.
@@ -52,7 +56,8 @@ class EasyLocalizationCleaner {
     final unusedKeys = localeKeys.difference(usedKeys);
 
     final totalKeys = localeKeys.length - baseKeys.length;
-    final usedKeysCount = localeKeys.length - unusedKeys.length;
+    final usedKeysCount =
+        localeKeys.length - unusedKeys.length - baseKeys.length;
     final baseKeysCount = baseKeys.length;
 
     writeInfo(
@@ -68,19 +73,22 @@ class EasyLocalizationCleaner {
       writeError('Found ${unusedKeys.length - baseKeys.length} unused keys');
     }
 
-    helpers
-      ..exportLog(
+    if (isExportCommand(args)) {
+      helpers.exportLog(
         currentPath,
         logFilePath,
         unusedKeys,
-      )
-      ..removeUnusedKeysFromJson(
-        currentPath,
-        localeKeysData,
-        unusedKeys,
-        baseKeys,
-        assetsDir,
       );
+    }
+
+    helpers.removeUnusedKeysFromJson(
+      currentPath,
+      localeKeysData,
+      unusedKeys,
+      baseKeys,
+      assetsDir,
+      jsonIndent,
+    );
   }
 
   /// Initializes the CLI tool by parsing command-line arguments.
@@ -117,12 +125,25 @@ class EasyLocalizationCleaner {
           assetsDir = value ?? 'assets/translations';
         },
       )
-      ..addOption(
-        'export-log-file',
+      ..addFlag(
+        'export',
         abbr: 'e',
-        help: 'The path to export the log file. '
-            'Defaults to `easy_localization_cleaner.log`.',
-        defaultsTo: 'easy_localization_cleaner.log',
+        help: 'Save unused keys as a .log file in the path provided.',
+      )
+      ..addOption(
+        'json-indent',
+        abbr: 'j',
+        help: 'Specify the JSON indentation format. '
+            r'Use "\t" for tabs or a number (e.g., 4) for spaces.',
+        defaultsTo: '  ',
+        callback: (value) {
+          if (value == r'\t') {
+            jsonIndent = '\t';
+          } else {
+            final spaces = int.tryParse(value ?? '2');
+            jsonIndent = spaces != null ? ' ' * spaces : '  '; // Use spaces
+          }
+        },
       )
       ..parse(args);
   }
@@ -135,28 +156,40 @@ class EasyLocalizationCleaner {
     return args.contains('--help') || args.contains('-h');
   }
 
+  /// Checks if the provided arguments contain an export command.
+  ///
+  /// [args] are the command-line arguments passed to the tool.
+  /// Returns `true` if the export command is found, otherwise `false`.
+  static bool isExportCommand(List<String> args) {
+    return args.contains('--export') || args.contains('-e');
+  }
+
   /// Displays the help message for the CLI tool.
   static void help() {
     print('Usage: easy_localization_cleaner [options]\n');
     print('Options:');
     print(
-      '--current-path\t\tThe current path of the project. '
+      '--current-path, -c\t\tThe current path of the project. '
       'Defaults to the current directory.',
     );
     print(
-      '--generated-class-key\tThe name of the generated class key. '
+      '--generated-class-key, -g\tThe name of the generated class key. '
       'Defaults to `LocaleKeys`.',
     );
     print(
-      '--assets-dir\t\tThe directory where the JSON files are located. '
+      '--assets-dir\t\t\tThe directory where the JSON files are located. '
       'Defaults to `assets/translations`.',
     );
     print(
-      '--export-log-file\tThe path to export the log file. '
-      'Defaults to `easy_localization_cleaner.log`.',
+      '--[no-]export, -e\t\tSave unused keys as a .log file '
+      'in the path provided.',
     );
     print(
-      '--help, -h\t\tDisplay this help message.',
+      '--json-indent, -j\t\tSpecify the JSON indentation format. '
+      r'Use "\t" for tabs or a number (e.g., 4) for spaces.',
+    );
+    print(
+      '--help, -h\t\t\tDisplay this help message.',
     );
   }
 }

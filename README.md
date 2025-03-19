@@ -10,6 +10,7 @@
 - **Identify Unused Keys**: Compares the keys in your JSON files with the ones used in your code.
 - **Remove Unused Keys**: Safely removes unused keys from your JSON files while preserving base keys.
 - **Export Logs**: Generates a log file listing unused keys for review.
+- **Format JSON Files**: Allows you to specify the indentation format for JSON files (e.g., tabs or spaces).
 
 ## Installation 💻
 
@@ -43,13 +44,39 @@ $ easy_localization_cleaner --current-path=/path/to/project --assets-dir=assets/
 
 ### Options
 
-| Option                        | Description                                     | Default Value                   |
-| ----------------------------- | ----------------------------------------------- | ------------------------------- |
-| `--current-path` , `-c`       | The current path of the project.                | Current directory (`.`)         |
-| `--generated-class-key`, `-g` | The name of the generated class key.            | `LocaleKeys`                    |
-| `--assets-dir`, `-a`          | The directory where the JSON files are located. | `assets/translations`           |
-| `--export-log-file`, `-e`     | The path to export the log file.                | `easy_localization_cleaner.log` |
-| `--help`, `-h`                | Display the help message.                       |
+| Option                        | Description                                                                                | Default Value           |
+| ----------------------------- | ------------------------------------------------------------------------------------------ | ----------------------- |
+| `--current-path` , `-p`       | The current path of the project.                                                           | Current directory (`.`) |
+| `--generated-class-key`, `-g` | The name of the generated class key.                                                       | `LocaleKeys`            |
+| `--assets-dir`, `-a`          | The directory where the JSON files are located.                                            | `assets/translations`   |
+| `--[no-]export`, `-e`         | Save unused keys as a .log file in the path provided.                                      | false                   |
+| `--json-indent`, `-j`         | Specify the JSON indentation format. Use `\t` for tabs or a number (e.g., `4`) for spaces. | `  ` (2 spaces)         |
+| `--help`, `-h`                | Display the help message.                                                                  |
+
+### Examples
+
+1. **Default Usage**:
+
+   ```shell
+   $ easy_localization_cleaner
+   ```
+
+2. **Specify JSON Indentation with Tabs**:
+
+   ```shell
+   $ easy_localization_cleaner --json-indent=\t
+   ```
+
+3. **Specify JSON Indentation with 4 Spaces**:
+
+   ```shell
+   $ easy_localization_cleaner --json-indent=4
+   ```
+
+4. **Run with All Options**:
+   ```shell
+   $ easy_localization_cleaner --current-path=/path/to/project --assets-dir=assets/translations --json-indent=4 --export
+   ```
 
 ## Contributing 🤝
 
