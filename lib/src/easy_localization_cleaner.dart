@@ -14,22 +14,21 @@ class EasyLocalizationCleaner {
   /// to perform localization-related operations.
   static final helpers = LocalizationHelpers();
 
-  static final _argParser = ArgParser();
-
   /// The main entry point for the CLI tool.
   ///
   /// [args] are the command-line arguments passed to the tool.
   static void run(List<String> args) {
-    defineOptions(_argParser);
+    final argParser = ArgParser();
+    defineOptions(argParser);
 
     late final CliArguments parsedArgs;
 
     try {
-      parsedArgs = parseArgsAndConfig(_argParser, args);
+      parsedArgs = parseArgsAndConfig(argParser, args);
     } on CliArgumentException catch (e) {
-      _usageError(e.message);
+      _usageError(argParser, e.message);
     } on CliHelpException {
-      _printHelp();
+      _printHelp(argParser);
     } on YamlException catch (e) {
       logger.e(e.toString());
       exit(66);
@@ -198,24 +197,24 @@ class EasyLocalizationCleaner {
     logger.i('Generated in ${stopwatch.elapsedMilliseconds}ms');
   }
 
-  static void _usageError(String error) {
-    _printUsage(error);
+  static void _usageError(ArgParser argParser, String error) {
+    _printUsage(argParser, error);
     exit(64);
   }
 
-  static void _printHelp() {
-    _printUsage();
+  static void _printHelp(ArgParser argParser) {
+    _printUsage(argParser);
     exit(exitCode);
   }
 
-  static void _printUsage([String? error]) {
+  static void _printUsage(ArgParser argParser, [String? error]) {
     final message = error ?? _kAbout;
 
     stdout.write('''
 $message
 
 $_kUsage
-${_argParser.usage}
+${argParser.usage}
 ''');
     exit(64);
   }
