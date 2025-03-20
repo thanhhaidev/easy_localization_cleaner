@@ -1,3 +1,18 @@
+# 0.0.6
+
+- Added support for the `--remove-keys` (`-k`) command to manually specify keys to remove from JSON files.
+  - Accepts a comma-separated list of keys (e.g., `--remove-keys=key1,key2`).
+- Added support for the `--auto-remove-keys` (`-r`) flag to allow user confirmation before removing unused keys when set to `false`.
+- Added support for reading configuration from `easy_localization_cleaner.yaml` or `pubspec.yaml`.
+  - The `easy_localization_cleaner` section can now be defined in either file.
+  - Supported configuration options:
+    - `current_path`: Specifies the current project path for locating files and resources.
+    - `remove_keys`: A list of keys to remove from JSON files.
+    - `auto_remove_keys`: A flag to enable or disable automatic removal of unused keys.
+    - `export_log`: A flag to enable or disable exporting unused keys to a log file.
+    - `assets_dir`: Specifies the directory where the JSON files are located.
+    - `json_indent`: Specifies the number of spaces or tab character for JSON indentation.
+
 # 0.0.5
 
 - Remove log and update README

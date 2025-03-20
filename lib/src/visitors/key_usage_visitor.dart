@@ -1,6 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:easy_localization_cleaner/easy_localization_cleaner.dart';
 
 /// A visitor class to extract localization keys used in Dart files.
 ///
@@ -13,8 +12,14 @@ import 'package:easy_localization_cleaner/easy_localization_cleaner.dart';
 /// - `Text('key').tr()`
 /// - `LocaleKeys.key`
 class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
+  /// Creates a new instance of [KeyUsageVisitor].
+  KeyUsageVisitor(this.generatedClassKey);
+
   /// A set to store the extracted localization keys.
   final Set<String> usedKeys = <String>{};
+
+  /// The name of the generated class key.
+  final String generatedClassKey;
 
   /// Visits method invocations to extract localization keys.
   ///
@@ -47,7 +52,7 @@ class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
         _extractKeyFromArgument(target.argumentList);
       }
     } else if (target is PrefixedIdentifier) {
-      if (target.prefix.name == EasyLocalizationCleaner.generatedClassKey) {
+      if (target.prefix.name == generatedClassKey) {
         // Handle cases like LocaleKeys.key.tr() or LocaleKeys.key.plural(1).
         usedKeys.add(target.identifier.name);
       }
@@ -67,7 +72,7 @@ class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
         // Handle cases like tr('key') or plural('key', 1).
         usedKeys.add(argument.value);
       } else if (argument is PrefixedIdentifier &&
-          argument.prefix.name == EasyLocalizationCleaner.generatedClassKey) {
+          argument.prefix.name == generatedClassKey) {
         // Handle cases like Text(LocaleKeys.key).tr().
         usedKeys.add(argument.identifier.name);
       }
@@ -80,7 +85,7 @@ class KeyUsageVisitor extends GeneralizingAstVisitor<void> {
   /// - `LocaleKeys.key`
   @override
   void visitPrefixedIdentifier(PrefixedIdentifier node) {
-    if (node.prefix.name == EasyLocalizationCleaner.generatedClassKey) {
+    if (node.prefix.name == generatedClassKey) {
       // Handle cases like LocaleKeys.key used directly.
       usedKeys.add(node.identifier.name);
     }

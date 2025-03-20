@@ -6,10 +6,6 @@ import 'package:glob/list_local_fs.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('Show help message', () {
-    EasyLocalizationCleaner.run(['--help']);
-  });
-
   test('Remove unused keys', () {
     EasyLocalizationCleaner.run(
       ['--current-path', 'example'],

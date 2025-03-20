@@ -1,194 +1,228 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:easy_localization_cleaner/src/cli/arguments.dart';
+import 'package:easy_localization_cleaner/src/cli/options.dart';
 import 'package:easy_localization_cleaner/src/helpers/helpers.dart';
+import 'package:easy_localization_cleaner/src/utils/logger.dart';
+import 'package:yaml/yaml.dart';
 
 /// A Dart CLI package designed to remove unused locale keys from JSON files
 /// used with the `easy_localization` package.
 class EasyLocalizationCleaner {
-  /// The current path of the project.
-  /// Defaults to the current directory.
-  static String currentPath = Directory.current.path;
-
-  /// The name of the generated class key.
-  /// Defaults to `LocaleKeys`.
-  static String generatedClassKey = 'LocaleKeys';
-
-  /// The directory where the JSON files are located.
-  /// Defaults to `assets/translations`.
-  static String assetsDir = 'assets/translations';
-
   /// An instance of [LocalizationHelpers]
   /// to perform localization-related operations.
   static final helpers = LocalizationHelpers();
 
-  /// The path to export the log file.
-  /// Defaults to `easy_localization_cleaner.log`.
-  static String logFilePath = 'easy_localization_cleaner.log';
-
-  /// The JSON indentation format.
-  /// Defaults to 2 spaces.
-  static String jsonIndent = '  ';
+  static final _argParser = ArgParser();
 
   /// The main entry point for the CLI tool.
   ///
   /// [args] are the command-line arguments passed to the tool.
   static void run(List<String> args) {
-    if (isHelpCommand(args)) {
-      help();
-      return;
+    defineOptions(_argParser);
+
+    late final CliArguments parsedArgs;
+
+    try {
+      parsedArgs = parseArgsAndConfig(_argParser, args);
+    } on CliArgumentException catch (e) {
+      _usageError(e.message);
+    } on CliHelpException {
+      _printHelp();
+    } on YamlException catch (e) {
+      logger.e(e.toString());
+      exit(66);
     }
 
-    writeInfo('Checking for used keys in $currentPath');
+    try {
+      _run(parsedArgs);
+    } on Object catch (e) {
+      logger.e(e.toString());
+      exit(65);
+    }
+  }
 
-    init(args);
+  static Future<void> _run(CliArguments parsedArgs) async {
+    final stopwatch = Stopwatch()..start();
 
-    final generatedClassPath = helpers.generatedClassPath(generatedClassKey);
+    final isVerbose = parsedArgs.verbose ?? kDefaultVerbose;
 
-    final localeKeysData =
-        helpers.extractLocaleKeys(currentPath, generatedClassPath);
-
-    final localeKeys = localeKeysData.keys.toSet();
-
-    final usedKeys = helpers.usedKeys(currentPath);
-    final baseKeys = helpers.extractBaseKeys(currentPath, generatedClassPath);
-
-    final unusedKeys = localeKeys.difference(usedKeys);
-
-    final totalKeys = localeKeys.length;
-    final usedKeysCount = localeKeys.length - unusedKeys.length;
-    final baseKeysCount = baseKeys.length;
-
-    writeInfo(
-      'Found total locale keys: $totalKeys, '
-      'used keys: $usedKeysCount, '
-      'base keys: $baseKeysCount',
-    );
-
-    if (totalKeys == usedKeysCount) {
-      writeSuccess('All LocaleKeys are used.');
-      return;
-    } else {
-      writeError('Found ${unusedKeys.length - baseKeys.length} unused keys');
+    if (isVerbose) {
+      logger.filterLevel = Level.trace;
     }
 
-    if (isExportCommand(args)) {
-      helpers.exportLog(
-        currentPath,
-        logFilePath,
-        unusedKeys,
+    try {
+      final currentPath = parsedArgs.currentPath ?? kDefaultCurrentPath;
+      final generatedClassKey =
+          parsedArgs.generatedClassKey ?? kDefaultGeneratedClassKey;
+      final assetsDir = parsedArgs.assetsDir ?? kDefaultAssetsDir;
+
+      var jsonIndent = parsedArgs.jsonIndent;
+      if (jsonIndent == r'\t' || jsonIndent == 't') {
+        jsonIndent = '\t';
+      } else {
+        final spaces = int.tryParse(jsonIndent ?? '2');
+        jsonIndent = spaces != null ? ' ' * spaces : '  ';
+      }
+
+      final generatedClassPath = helpers.generatedClassPath(generatedClassKey);
+
+      final localeKeysData =
+          helpers.extractLocaleKeys(currentPath, generatedClassPath);
+
+      final localeKeys = localeKeysData.keys.toSet();
+
+      final usedKeys = helpers.usedKeys(currentPath, generatedClassKey);
+      final baseKeys = helpers.extractBaseKeys(currentPath, generatedClassPath);
+      final unusedKeys = localeKeys.difference(usedKeys);
+
+      final totalKeys = localeKeys.length;
+      final usedKeysCount = localeKeys.length - unusedKeys.length;
+      final baseKeysCount = baseKeys.length;
+
+      logger.i(
+        'Found total locale keys: $totalKeys, '
+        'used keys: $usedKeysCount, '
+        'base keys: $baseKeysCount',
       );
+
+      if (totalKeys == usedKeysCount) {
+        logger.i('All LocaleKeys are used.');
+        return;
+      } else {
+        logger.i('Found ${unusedKeys.length} unused keys');
+      }
+
+      final autoRemoveKeys =
+          parsedArgs.autoRemoveKeys ?? kDefaultAutoRemoveKeys;
+
+      final removeKeys = parsedArgs.removeKeys ?? [];
+
+      if (!autoRemoveKeys) {
+        if (removeKeys.isNotEmpty) {
+          logger.i('Keys to remove: $removeKeys');
+
+          final invalidKeys =
+              removeKeys.where((key) => !unusedKeys.contains(key));
+          if (invalidKeys.isNotEmpty) {
+            logger.e('Invalid keys: ${invalidKeys.toList()}');
+          }
+
+          final validKeys = removeKeys.toSet().difference(invalidKeys.toSet());
+          if (validKeys.isNotEmpty) {
+            helpers.removeUnusedKeysFromJson(
+              currentPath,
+              localeKeysData,
+              validKeys.toSet(),
+              baseKeys,
+              assetsDir,
+              jsonIndent,
+            );
+          }
+        } else {
+          logger.i('Keys to remove: ${unusedKeys.toList()}');
+
+          stdout.write(
+            'Do you want to remove these keys from JSON files? (y/n): ',
+          );
+          final input = stdin.readLineSync()?.trim().toLowerCase();
+
+          if (input != 'y') {
+            logger.i('Skipping removal of unused keys.');
+            return;
+          } else {
+            stdout.write('Do you remove specific keys? (y/n): ');
+            final input = stdin.readLineSync()?.trim().toLowerCase();
+
+            if (input == 'y') {
+              stdout.write('Enter keys to remove separated by commas: ');
+              final keys = stdin
+                  .readLineSync()
+                  ?.trim()
+                  .split(',')
+                  .map((key) => key.trim())
+                  .toList();
+
+              if (keys != null) {
+                final validKeys = keys.toSet().intersection(unusedKeys);
+                if (validKeys.isNotEmpty) {
+                  helpers.removeUnusedKeysFromJson(
+                    currentPath,
+                    localeKeysData,
+                    validKeys,
+                    baseKeys,
+                    assetsDir,
+                    jsonIndent,
+                  );
+                } else {
+                  logger.e('No valid keys to remove.');
+                }
+              }
+            } else {
+              helpers.removeUnusedKeysFromJson(
+                currentPath,
+                localeKeysData,
+                unusedKeys,
+                baseKeys,
+                assetsDir,
+                jsonIndent,
+              );
+            }
+          }
+        }
+      } else {
+        helpers.removeUnusedKeysFromJson(
+          currentPath,
+          localeKeysData,
+          unusedKeys,
+          baseKeys,
+          assetsDir,
+          jsonIndent,
+        );
+      }
+
+      if (parsedArgs.exportLog ?? kDefaultExportLog) {
+        logger.i('Exporting unused keys to log file...');
+        helpers.exportLog(
+          parsedArgs.currentPath ?? kDefaultCurrentPath,
+          'easy_localization_cleaner.log',
+          unusedKeys,
+        );
+      }
+    } on Object catch (e) {
+      logger.e(e.toString());
+      exit(1);
     }
 
-    helpers.removeUnusedKeysFromJson(
-      currentPath,
-      localeKeysData,
-      unusedKeys,
-      baseKeys,
-      assetsDir,
-      jsonIndent,
-    );
+    logger.i('Generated in ${stopwatch.elapsedMilliseconds}ms');
   }
 
-  /// Initializes the CLI tool by parsing command-line arguments.
-  ///
-  /// [args] are the command-line arguments passed to the tool.
-  static void init(List<String> args) {
-    ArgParser()
-      ..addOption(
-        'current-path',
-        abbr: 'c', // Short command for --current-path
-        help: 'The current path of the project. '
-            'Defaults to the current directory.',
-        defaultsTo: Directory.current.path,
-        callback: (value) {
-          currentPath = value ?? Directory.current.path;
-        },
-      )
-      ..addOption(
-        'generated-class-key',
-        abbr: 'g',
-        help: 'The name of the generated class key. '
-            'Defaults to `LocaleKeys`.',
-        callback: (value) {
-          generatedClassKey = value ?? 'LocaleKeys';
-        },
-      )
-      ..addOption(
-        'assets-dir',
-        abbr: 'a',
-        help: 'The directory where the JSON files are located. '
-            'Defaults to `assets/translations`.',
-        defaultsTo: 'assets/translations',
-        callback: (value) {
-          assetsDir = value ?? 'assets/translations';
-        },
-      )
-      ..addFlag(
-        'export',
-        abbr: 'e',
-        help: 'Save unused keys as a .log file in the path provided.',
-      )
-      ..addOption(
-        'json-indent',
-        abbr: 'j',
-        help: 'Specify the JSON indentation format. '
-            r'Use "\t" for tabs or a number (e.g., 4) for spaces.',
-        defaultsTo: '  ',
-        callback: (value) {
-          if (value == r'\t' || value == 't') {
-            jsonIndent = '\t';
-          } else {
-            final spaces = int.tryParse(value ?? '2');
-            jsonIndent = spaces != null ? ' ' * spaces : '  ';
-          }
-        },
-      )
-      ..parse(args);
+  static void _usageError(String error) {
+    _printUsage(error);
+    exit(64);
   }
 
-  /// Checks if the provided arguments contain a help command.
-  ///
-  /// [args] are the command-line arguments passed to the tool.
-  /// Returns `true` if the help command is found, otherwise `false`.
-  static bool isHelpCommand(List<String> args) {
-    return args.contains('--help') || args.contains('-h');
+  static void _printHelp() {
+    _printUsage();
+    exit(exitCode);
   }
 
-  /// Checks if the provided arguments contain an export command.
-  ///
-  /// [args] are the command-line arguments passed to the tool.
-  /// Returns `true` if the export command is found, otherwise `false`.
-  static bool isExportCommand(List<String> args) {
-    return args.contains('--export') || args.contains('-e');
+  static void _printUsage([String? error]) {
+    final message = error ?? _kAbout;
+
+    stdout.write('''
+$message
+
+$_kUsage
+${_argParser.usage}
+''');
+    exit(64);
   }
 
-  /// Displays the help message for the CLI tool.
-  static void help() {
-    print('Usage: easy_localization_cleaner [options]\n');
-    print('Options:');
-    print(
-      '--current-path, -c\t\tThe current path of the project. '
-      'Defaults to the current directory.',
-    );
-    print(
-      '--generated-class-key, -g\tThe name of the generated class key. '
-      'Defaults to `LocaleKeys`.',
-    );
-    print(
-      '--assets-dir\t\t\tThe directory where the JSON files are located. '
-      'Defaults to `assets/translations`.',
-    );
-    print(
-      '--[no-]export, -e\t\tSave unused keys as a .log file '
-      'in the path provided.',
-    );
-    print(
-      '--json-indent, -j\t\tSpecify the JSON indentation format. '
-      r'Use "\t" for tabs or a number (e.g., 4) for spaces.',
-    );
-    print(
-      '--help, -h\t\t\tDisplay this help message.',
-    );
-  }
+  static const _kAbout =
+      'A Dart CLI package designed to remove unused locale keys '
+      'from JSON files used with the `easy_localization` package.';
+
+  static const _kUsage = 'Usage: easy_localization_cleaner [options]';
 }

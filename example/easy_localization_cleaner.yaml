@@ -1,0 +1,11 @@
+easy_localization_cleaner:
+  current_path: .
+  remove_keys:
+    - "money5"
+    - "languages_es"
+    - "languages_en"
+    - "key_sub_key_sub_sub_key_sub_sub_sub_key"
+  auto_remove_keys: false
+  export_log: true
+  assets_dir: assets/translations
+  json_indent: 4

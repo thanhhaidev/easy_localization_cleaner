@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:easy_localization_cleaner/src/helpers/console.dart';
+import 'package:easy_localization_cleaner/src/utils/logger.dart';
 import 'package:easy_localization_cleaner/src/visitors/visitors.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
@@ -66,9 +66,9 @@ final class LocalizationHelpers {
 
   /// Extracts all used localization keys from `.dart` files
   /// in the specified [currentPath].
-  Set<String> usedKeys(String currentPath) {
+  Set<String> usedKeys(String currentPath, String generatedClassKey) {
     final usedKeys = <String>{};
-    final visitor = KeyUsageVisitor();
+    final visitor = KeyUsageVisitor(generatedClassKey);
 
     final dartFiles = Glob('$currentPath/lib/**.dart').listSync();
     for (final file in dartFiles) {
@@ -93,6 +93,8 @@ final class LocalizationHelpers {
     String assetsDir,
     String jsonIndent,
   ) {
+    logger.i('Removing unused keys from JSON files...');
+
     final jsonFiles = Glob('$currentPath/$assetsDir/**.json').listSync();
 
     for (final file in jsonFiles) {
@@ -111,7 +113,7 @@ final class LocalizationHelpers {
             JsonEncoder.withIndent(jsonIndent).convert(jsonMap);
         File(file.path).writeAsStringSync(updatedJsonString);
 
-        writeSuccess('Updated ${file.path}');
+        logger.i('Updated ${file.path}');
       }
     }
   }
@@ -151,6 +153,6 @@ final class LocalizationHelpers {
     final content = keys.join('\n');
     file.writeAsStringSync(content);
 
-    writeSuccess('Exported log file to ${file.path}');
+    logger.i('Exported log file to ${file.path}');
   }
 }
